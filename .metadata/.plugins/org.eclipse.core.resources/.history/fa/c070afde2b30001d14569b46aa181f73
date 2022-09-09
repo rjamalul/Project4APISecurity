@@ -1,0 +1,53 @@
+package com.skillstorm.demo.configurations;
+
+import javax.sql.DataSource;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+
+@Configuration
+public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
+	
+	//datasource (tables) loaded in with h2
+	@Autowired
+	private DataSource datasource;
+	
+	@Autowired
+	private PasswordEncoder encoder;
+	
+	@Autowired
+	protected void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
+		
+		//enables jdbc authentication
+		auth.jdbcAuthentication().dataSource(datasource).passwordEncoder(encoder);
+	}
+	
+	//We use configure with HttpSecurity in order to configure properties on Http requests to allow/disallow 
+	//certain things
+	@Override
+	protected void configure(HttpSecurity http) throws Exception {
+		
+		//Don't use formLogin() with angular app
+		//http.formLogin();
+		http.httpBasic();
+		
+		
+		//This will generate a CSRF Cookie
+		//Allows us to access any endpoint, I now need X-XSRF-TOKEN header containing the value of cookie 
+		http.csrf().csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse());
+		
+		
+		//Every HTTP request must be authenticated using mvcMatchers
+		http.authorizeHttpRequests().mvcMatchers("/**").authenticated();
+		http.authorizeHttpRequests().mvcMatchers("/logout/**").permitAll();
+		//Clears JSESSIONID cookie and invalidates session
+		//Logs out and requires reauthentication.
+//		http.logout().deleteCookies("JSESSIONID").invalidateHttpSession(true);
+	}
+
+}
