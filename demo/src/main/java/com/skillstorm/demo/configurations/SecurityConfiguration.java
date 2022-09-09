@@ -44,7 +44,15 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 		
 		//Every HTTP request must be authenticated using mvcMatchers
 		http.authorizeHttpRequests().mvcMatchers("/**").authenticated();
+		
+		//Authorization with the admin role with dummy method
+		http.authorizeHttpRequests().mvcMatchers("/admin/**").hasAnyAuthority("ROLE_ADMIN");
+				
+		//permit all to logout as long as they have the X-XSRF-TOKEN
 		http.authorizeHttpRequests().mvcMatchers("/logout/**").permitAll();
+		
+		
+		
 		//Clears JSESSIONID cookie and invalidates session
 		//Logs out and requires reauthentication.
 		http.logout().deleteCookies("JSESSIONID").invalidateHttpSession(true);
